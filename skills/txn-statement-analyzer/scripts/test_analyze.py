@@ -97,6 +97,9 @@ def test_date_range():
     assert list(out["monthly"]) == ["2026-08"], out["monthly"]
     assert out["categories"]["coffee"] == {"total": 44.65, "count": 6, "share_pct": 1.9}, out["categories"]["coffee"]
     assert out["duplicates"][0]["rows"] == [73, 74]  # row numbers still point at the original file
+    # baselines come from the whole file: only the planted anomaly, and subscriptions still found
+    assert [(a["merchant"], a["category_median"]) for a in out["anomalies"]] == [("WHOLE FOODS", 83.47)], out["anomalies"]
+    assert len(out["recurring"]) == 4 and out["totals"]["recurring_per_month"] == 107.46, out["recurring"]
     try:
         with contextlib.redirect_stdout(io.StringIO()):
             analyze.main([str(SAMPLE), "--start", "2027-01-01"])

@@ -102,12 +102,19 @@ def load(path, names, flip_sign=False):
     return txns, skipped
 
 
-def analyze(txns, rules):
+def analyze(all_txns, rules, start=None, end=None):
+    """Recurring and anomaly baselines use every row; everything reported is limited to start..end."""
+    def inside(t):
+        return (not start or t["date"] >= start) and (not end or t["date"] <= end)
+
+    for t in all_txns:
+        if t["amount"] < 0:
+            t["category"] = categorize(t["merchant"], rules)
+    all_spend = [t for t in all_txns if t["amount"] < 0]
+    txns = [t for t in all_txns if inside(t)]
     refunds = [t for t in txns if t["amount"] > 0 and "REFUND" in t["desc"].upper()]
     refund_rows = {t["row"] for t in refunds}
     spend = [t for t in txns if t["amount"] < 0]
-    for t in spend:
-        t["category"] = categorize(t["merchant"], rules)
 
     monthly = defaultdict(lambda: {"income": Decimal(0), "spend": Decimal(0), "refunds": Decimal(0)})
     for t in txns:
@@ -128,7 +135,7 @@ def analyze(txns, rules):
     # recurring: >=3 charges, amounts within 5% of their median, consecutive gaps 30 +/- 5 days
     # shortcut: needs every charge from a merchant to fit; a one-off extra purchase hides the series
     by_merchant = defaultdict(list)
-    for t in spend:
+    for t in all_spend:
         by_merchant[t["merchant"]].append(t)
     recurring = []
     for m, ts in by_merchant.items():
@@ -136,15 +143,19 @@ def analyze(txns, rules):
         amts = [-t["amount"] for t in ts]
         med = statistics.median(amts)
         if len(ts) >= 3 and all(abs(a - med) <= med * Decimal("0.05") for a in amts) \
-                and all(25 <= (b["date"] - a["date"]).days <= 35 for a, b in zip(ts, ts[1:])):
+                and all(25 <= (b["date"] - a["date"]).days <= 35 for a, b in zip(ts, ts[1:])) \
+                and any(inside(t) for t in ts):  # report a series only if it charged in the window
             recurring.append({"merchant": m, "amount": money(med), "count": len(ts),
                               "last_date": ts[-1]["date"].isoformat(), "rows": [t["row"] for t in ts]})
 
     # anomalies: amount > category median + 3 * MAD (needs >= 5 charges and MAD > 0)
     # recurring charges are expected, so they are left out of the check
     recurring_rows = {r for item in recurring for r in item["rows"]}
+    all_cats = defaultdict(list)
+    for t in all_spend:
+        all_cats[t["category"]].append(t)
     anomalies = []
-    for c, ts in cats.items():
+    for c, ts in all_cats.items():
         ts = [t for t in ts if t["row"] not in recurring_rows]
         amts = [-t["amount"] for t in ts]
         if len(amts) < 5:
@@ -155,7 +166,7 @@ def analyze(txns, rules):
             continue
         limit = med + 3 * mad
         for t in ts:
-            if -t["amount"] > limit:
+            if inside(t) and -t["amount"] > limit:
                 anomalies.append({"merchant": t["merchant"], "category": c, "amount": money(-t["amount"]),
                                   "date": t["date"].isoformat(), "category_median": money(med),
                                   "threshold": money(limit), "rows": [t["row"]]})
@@ -199,13 +210,14 @@ def main(argv=None):
              "debit": args.debit, "credit": args.credit}
     txns, skipped = load(args.csv, names, args.flip_sign)
     # row numbers survive the filter, so citations still point at the original file
-    txns = [t for t in txns if (not args.start or t["date"] >= args.start) and (not args.end or t["date"] <= args.end)]
-    if not txns:
+    window = [t for t in txns if (not args.start or t["date"] >= args.start) and (not args.end or t["date"] <= args.end)]
+    if not window:
         sys.exit("error: no valid rows found" + (" in that date range" if args.start or args.end else ""))
-    monthly, totals, categories, recurring, anomalies, duplicates, refunds = analyze(txns, load_rules(args.categories))
-    dates = [t["date"] for t in txns]
+    monthly, totals, categories, recurring, anomalies, duplicates, refunds = analyze(
+        txns, load_rules(args.categories), args.start, args.end)
+    dates = [t["date"] for t in window]
     out = {
-        "meta": {"source": Path(args.csv).name, "filter": [str(args.start or ""), str(args.end or "")], "rows": len(txns), "skipped": len(skipped), "skipped_rows": skipped,
+        "meta": {"source": Path(args.csv).name, "filter": [str(args.start or ""), str(args.end or "")], "rows": len(window), "skipped": len(skipped), "skipped_rows": skipped,
                  "date_range": [min(dates).isoformat(), max(dates).isoformat()]},
         "totals": totals, "monthly": monthly, "categories": categories, "recurring": recurring,
         "anomalies": anomalies, "duplicates": duplicates, "refunds": refunds,
