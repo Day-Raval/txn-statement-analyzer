@@ -7,6 +7,7 @@ Usage: python3 analyze.py STATEMENT.csv [--categories FILE] [column options]
 Input: CSV with Date, Description, Amount columns (case-insensitive). Negative amount = spend.
 Other layouts: --date/--description/--amount rename columns, --debit/--credit for split columns,
 --flip-sign when purchases are positive. See references/column-mapping.md.
+--start/--end (YYYY-MM-DD, inclusive) limit the analysis to a date range.
 Every finding carries `rows` (CSV line numbers) so each number can be traced back to the source.
 """
 import argparse, csv, json, re, statistics, sys
@@ -57,6 +58,13 @@ def categorize(merchant, rules):
         if any(k in merchant for k in keywords):
             return name
     return "uncategorized"
+
+
+def iso_date(s):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"use YYYY-MM-DD, got {s!r}")
 
 
 def money(d):
@@ -183,17 +191,21 @@ def main(argv=None):
     p.add_argument("--debit", help="money-out column (use with --credit instead of --amount)")
     p.add_argument("--credit", help="money-in column (use with --debit instead of --amount)")
     p.add_argument("--flip-sign", action="store_true", help="file shows purchases as positive numbers")
+    p.add_argument("--start", type=iso_date, help="only rows on or after this date (YYYY-MM-DD)")
+    p.add_argument("--end", type=iso_date, help="only rows on or before this date (YYYY-MM-DD)")
     args = p.parse_args(argv)
 
     names = {"date": args.date, "description": args.description, "amount": args.amount,
              "debit": args.debit, "credit": args.credit}
     txns, skipped = load(args.csv, names, args.flip_sign)
+    # row numbers survive the filter, so citations still point at the original file
+    txns = [t for t in txns if (not args.start or t["date"] >= args.start) and (not args.end or t["date"] <= args.end)]
     if not txns:
-        sys.exit("error: no valid rows found")
+        sys.exit("error: no valid rows found" + (" in that date range" if args.start or args.end else ""))
     monthly, totals, categories, recurring, anomalies, duplicates, refunds = analyze(txns, load_rules(args.categories))
     dates = [t["date"] for t in txns]
     out = {
-        "meta": {"source": Path(args.csv).name, "rows": len(txns), "skipped": len(skipped), "skipped_rows": skipped,
+        "meta": {"source": Path(args.csv).name, "filter": [str(args.start or ""), str(args.end or "")], "rows": len(txns), "skipped": len(skipped), "skipped_rows": skipped,
                  "date_range": [min(dates).isoformat(), max(dates).isoformat()]},
         "totals": totals, "monthly": monthly, "categories": categories, "recurring": recurring,
         "anomalies": anomalies, "duplicates": duplicates, "refunds": refunds,

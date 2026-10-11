@@ -62,6 +62,8 @@ Analyze my statement: ~/Downloads/statement.csv
 ```
 Or attach the CSV and ask: "Where did my money go last month?", "Find my subscriptions" or "Any duplicate or unusual charges?"
 
+Questions about a period ("coffee in August", "since the 15th") rerun the script with `--start`/`--end`, so those numbers are computed too.
+
 To run the script without an agent:
 ```
 python3 skills/txn-statement-analyzer/scripts/analyze.py statement.csv

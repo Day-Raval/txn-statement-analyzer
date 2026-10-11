@@ -88,8 +88,26 @@ def test_column_options():
         assert "missing column" in str(e.code)
 
 
+def test_date_range():
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        analyze.main([str(SAMPLE), "--start", "2026-08-01", "--end", "2026-08-31"])
+    out = json.loads(buf.getvalue())
+    assert out["meta"]["date_range"] == ["2026-08-01", "2026-08-31"], out["meta"]
+    assert list(out["monthly"]) == ["2026-08"], out["monthly"]
+    assert out["categories"]["coffee"] == {"total": 44.65, "count": 6, "share_pct": 1.9}, out["categories"]["coffee"]
+    assert out["duplicates"][0]["rows"] == [73, 74]  # row numbers still point at the original file
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            analyze.main([str(SAMPLE), "--start", "2027-01-01"])
+        raise AssertionError("expected SystemExit")
+    except SystemExit as e:
+        assert "date range" in str(e.code)
+
+
 if __name__ == "__main__":
     test_sample()
     test_messy_input()
     test_column_options()
+    test_date_range()
     print("all tests passed")

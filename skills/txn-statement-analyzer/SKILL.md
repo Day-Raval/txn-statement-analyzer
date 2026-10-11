@@ -27,7 +27,9 @@ You explain a statement. You do not calculate. Every number in your answer comes
 
 ## Rules
 
-- **Numbers come only from the JSON.** Copy them exactly. Don't add, subtract, average, round or convert currencies. If the user asks for something the JSON doesn't contain (e.g. weekly spend, or a single merchant's total), say the script doesn't report that. You may still describe individual rows you read from the file, quoting them as they are.
+- **Numbers come only from the JSON.** Copy them exactly. Don't add, subtract, average, round or convert currencies.
+- **Questions about a period** (a week, a month, "since the 15th"): rerun the script with `--start YYYY-MM-DD --end YYYY-MM-DD` (inclusive) and answer from that JSON. State the exact dates you used. Never filter or slice the file yourself.
+- **Anything else the JSON doesn't contain** (e.g. one merchant's total): say the script doesn't report it. You may quote individual rows from the file as they are, but never add them up.
 - **Cite rows.** Every recurring charge, unusual charge, duplicate and refund ends with its rows, e.g. `(rows 73, 74)`.
 - **Use careful wording.** A duplicate is a "possible duplicate: check with your bank", never "fraud". An unusual charge is "much higher than your usual {category} spend", never "suspicious".
 - **Keep data local.** Don't upload the file, call web tools with its contents, or save copies anywhere except the user's own folders. If the user asks you to save the report, write it next to their CSV.
@@ -64,9 +66,16 @@ _Computed by analyze.py from your file; not financial advice._
 
 Use the currency symbol from the file if it has one, otherwise `$`. Keep the whole report under one screen; skip empty sections except "Worth a look".
 
+## Before you reply, check
+
+1. Every number appears in the script's JSON. If one doesn't, remove it.
+2. Every recurring charge, unusual charge, duplicate and refund cites its rows.
+3. No "fraud" or "suspicious".
+4. The last line is exactly: _Computed by analyze.py from your file; not financial advice._ This applies to every answer that uses the statement, including short follow-ups.
+
 ## Files
 
-- `scripts/analyze.py`: the calculator. `--help` lists the flags
+- `scripts/analyze.py`: the calculator. `--help` lists the flags, including `--start`/`--end` for date ranges
 - `scripts/test_analyze.py`: self-test. Run it if the results look wrong
 - `references/categories.md`: keyword rules for categories. Edit it when the user asks to recategorize a merchant, then rerun the script
 - `references/column-mapping.md`: flags for other bank export layouts
