@@ -129,6 +129,10 @@ python3 skills/txn-statement-analyzer/scripts/test_analyze.py
 ```
 This checks every planted answer and total in the sample, messy input (accounting-style negatives, `$` and commas, bad rows) and the column flags (Debit/Credit, `--flip-sign`, wrong headers). CI runs it on every push. `evals/trigger-tests.md` has prompts that should and shouldn't load the skill.
 
+## Design notes
+
+The original proposal (goals, novelty, build plan) is in [`docs/`](docs/).
+
 ## Security
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
