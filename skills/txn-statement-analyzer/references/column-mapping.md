@@ -23,7 +23,7 @@ Flags can be combined, e.g. `--date "Trans. Date" --description Memo --flip-sign
 
 ## How to tell the sign is wrong
 
-After a run, if `totals.income` is close to zero but there's plenty of spend, or a store like a grocery chain shows up as income, the file uses positive amounts for purchases. Rerun with `--flip-sign`.
+After a run, the file probably uses positive amounts for purchases if `uncategorized` is most of the spend, only a handful of charges count as spend, and paychecks or deposits appear among them. Rerun with `--flip-sign`.
 
 ## Not supported
 

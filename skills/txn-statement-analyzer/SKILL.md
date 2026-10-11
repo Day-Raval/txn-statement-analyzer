@@ -21,7 +21,7 @@ You explain a statement. You do not calculate. Every number in your answer comes
 
 4. **Sanity-check the JSON.** Look at `meta.skipped` and the `uncategorized` share before you write anything.
    - If more than a few rows were skipped, list their row numbers and suggest a fix (usually the date format or a flag).
-   - If income looks like spend (for example, income is almost zero and the shopping category is large), the sign is probably flipped. Rerun with `--flip-sign` and tell the user you did.
+   - If the sign looks flipped, rerun with `--flip-sign` and tell the user you did. Signs of a flipped file: `uncategorized` is most of the spend, very few charges count as spend, and paychecks or deposits appear as spend.
 
 5. **Write the report** in the format below.
 
