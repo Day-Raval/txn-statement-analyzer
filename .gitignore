@@ -1,0 +1,8 @@
+# Never commit real statements: only the synthetic sample is allowed
+*.csv
+!skills/txn-statement-analyzer/examples/sample-statement.csv
+__pycache__/
+*.pyc
+.venv/
+*.zip
+.DS_Store
