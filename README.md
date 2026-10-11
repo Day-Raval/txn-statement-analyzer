@@ -6,7 +6,7 @@ Most AI tools read a statement and do the arithmetic in their head, so totals dr
 
 ## What you get
 
-- Monthly income, spend, refunds and net
+- Monthly and total income, spend, refunds and net
 - Spend by category, from keyword rules you can edit
 - **Recurring charges**: subscriptions and other fixed monthly payments
 - **Unusual charges**: amounts far above what's normal for that category
@@ -19,7 +19,7 @@ Run on the bundled sample, it finds 4 subscriptions (Netflix, Spotify, Planet Fi
 ## Requirements
 
 - Python 3.9 or newer (`python3 --version`). No packages to install.
-- A CSV with `Date`, `Description` and `Amount` columns, where a negative amount is money spent. Most banks can export this; see `references/column-mapping.md` for other layouts.
+- A CSV export of your statement. The default layout is `Date`, `Description`, `Amount` with negative amounts as spend. Other layouts (different headers, Debit/Credit columns, positive purchases) work with flags; see `references/column-mapping.md`.
 
 ## Install
 
@@ -91,12 +91,12 @@ statement.csv ──► scripts/analyze.py ──► JSON (numbers + row citatio
 | Duplicate | Same merchant and same amount within 2 days |
 | Refund | Positive amount whose description contains `REFUND` |
 
-The output JSON has the keys `meta`, `monthly`, `categories`, `recurring`, `anomalies`, `duplicates` and `refunds`. The skill's instructions tell the agent to use only numbers from this JSON and to say so when a question needs data the JSON doesn't have.
+The output JSON has the keys `meta`, `totals`, `monthly`, `categories`, `recurring`, `anomalies`, `duplicates` and `refunds`. The skill's instructions tell the agent to use only numbers from this JSON and to say so when a question needs data the JSON doesn't have.
 
 ## Customize
 
 - `references/categories.md`: add your merchants or new categories, one line per category
-- `references/column-mapping.md`: how to convert other bank export layouts into the expected columns
+- `references/column-mapping.md`: which flags to use for other bank export layouts
 
 ## Privacy
 
@@ -114,8 +114,8 @@ The repo's `.gitignore` excludes every `*.csv` except the synthetic sample, and 
 
 | Problem | Fix |
 |---|---|
-| `missing column(s)` | Rename your columns to `Date`, `Description` and `Amount`, or follow `references/column-mapping.md` |
-| Spend shows as income | Your bank exports spending as positive amounts; flip the sign (see `column-mapping.md`) |
+| `missing column(s)` | Pass your header names, e.g. `--date "Transaction Date" --description Payee`, or `--debit Debit --credit Credit` (see `references/column-mapping.md`) |
+| Spend shows as income | Your bank exports purchases as positive amounts; add `--flip-sign` |
 | Many rows `skipped` | The date format isn't recognized. Supported: `2026-07-01`, `07/01/2026`, `07/01/26`, `01-Jul-2026` |
 | Lots of `uncategorized` | Add your merchants to `references/categories.md` |
 | `python3: command not found` | Install Python 3.9+ (on Windows, use `py` in place of `python3`) |
@@ -127,7 +127,7 @@ The repo's `.gitignore` excludes every `*.csv` except the synthetic sample, and 
 ```
 python3 skills/txn-statement-analyzer/scripts/test_analyze.py
 ```
-This checks every planted answer in the sample, plus messy input (accounting-style negatives, `$` and commas, bad rows). CI runs it on every push. `evals/trigger-tests.md` has prompts that should and shouldn't load the skill.
+This checks every planted answer and total in the sample, messy input (accounting-style negatives, `$` and commas, bad rows) and the column flags (Debit/Credit, `--flip-sign`, wrong headers). CI runs it on every push. `evals/trigger-tests.md` has prompts that should and shouldn't load the skill.
 
 ## Security
 
