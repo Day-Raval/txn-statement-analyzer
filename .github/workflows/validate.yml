@@ -1,0 +1,39 @@
+name: validate
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Analyzer tests
+        run: python skills/txn-statement-analyzer/scripts/test_analyze.py
+      - name: Sample statement is reproducible
+        run: |
+          python evals/make_sample.py
+          git diff --exit-code skills/txn-statement-analyzer/examples/sample-statement.csv
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Validate plugin and marketplace
+        run: claude plugin validate .
+      - name: Fail if a real statement is committed
+        run: |
+          bad=$(git ls-files '*.csv' '*.CSV' | grep -v '^skills/txn-statement-analyzer/examples/sample-statement.csv$' || true)
+          if [ -n "$bad" ]; then echo "Only the synthetic sample CSV may be committed:"; echo "$bad"; exit 1; fi
+      - name: Installer puts the skill in all 5 agents
+        run: |
+          H=$(mktemp -d)
+          HOME=$H ./install.sh --all
+          test "$(find $H -name SKILL.md | wc -l)" -eq 5

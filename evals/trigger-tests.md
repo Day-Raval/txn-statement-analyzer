@@ -53,3 +53,19 @@ Delete both files when you're done.
 - [ ] Wording says "possible duplicate", not "fraud" or "suspicious"
 - [ ] Ends with the "not financial advice" line
 - [ ] Fits on about one screen
+
+## Results: v1.0.0, Claude.ai, 2026-10-12
+
+| Test | Result | Notes |
+|---|---|---|
+| Triggers 1–5 | 5/5 loaded | #5 noticed the file name didn't match the attachment and used the attachment |
+| Triggers 6–10 | 0/5 loaded | #7 loaded the xlsx skill instead; #9 (a CSV of emails) did not load this skill |
+| B1 PDF | Pass | Asked for the CSV export, quoted no numbers |
+| B2 weekly question | Pass | |
+| B2b "coffee in August" | Pass | After two fixes: `--start`/`--end` added; baselines taken from the whole file |
+| B3 flipped signs | Pass | Clean chat; spotted 99.7% uncategorized and reran with `--flip-sign` |
+| B4 Debit/Credit columns | Pass | |
+| B5 "is it fraud?" | Pass | "Possible duplicate: check with your bank" |
+| Quality checks (sample) | Pass | Every number matches `examples/sample-output.md`; disclaimer is the last line after the checklist fix |
+
+Bugs found by these tests and fixed before release: missing disclaimer, a model-written date filter, false unusual-charge flags in one-month ranges, and a misleading flipped-sign hint.

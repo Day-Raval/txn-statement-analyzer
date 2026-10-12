@@ -1,0 +1,14 @@
+{
+  "name": "txn-statement-analyzer",
+  "description": "Transaction Statement Analyzer by Dayesh Raval: code-computed, row-cited bank statement summaries.",
+  "owner": {
+    "name": "Dayesh Raval"
+  },
+  "plugins": [
+    {
+      "name": "txn-statement-analyzer",
+      "source": "./",
+      "description": "Bank statement CSV to spending summary, with every number computed by code and cited to its rows."
+    }
+  ]
+}

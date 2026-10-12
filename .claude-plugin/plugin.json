@@ -1,0 +1,22 @@
+{
+  "name": "txn-statement-analyzer",
+  "displayName": "Transaction Statement Analyzer",
+  "version": "1.0.0",
+  "description": "Turns a bank or card statement CSV into a spending summary: monthly totals, categories, subscriptions, unusual charges, possible duplicates and refunds. A bundled Python script computes every number, and every finding cites its statement rows.",
+  "author": {
+    "name": "Dayesh Raval"
+  },
+  "homepage": "https://github.com/Day-Raval/txn-statement-analyzer",
+  "repository": "https://github.com/Day-Raval/txn-statement-analyzer",
+  "license": "MIT",
+  "keywords": [
+    "finance",
+    "bank-statement",
+    "budgeting",
+    "subscriptions",
+    "provenance"
+  ],
+  "privacyPolicyUrl": "https://github.com/Day-Raval/txn-statement-analyzer#privacy",
+  "supportUrl": "https://github.com/Day-Raval/txn-statement-analyzer/issues",
+  "documentationUrl": "https://github.com/Day-Raval/txn-statement-analyzer#readme"
+}
